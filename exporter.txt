@@ -1,0 +1,63 @@
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.bigquery import BigQuery
+from mage_ai.io.config import ConfigFileLoader
+from pandas import DataFrame
+from os import path
+import json
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_big_query(json_data: str, **kwargs) -> None:
+    """
+    Export data to a BigQuery warehouse from a JSON string.
+    Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://docs.mage.ai/design/data-loading#bigquery
+    """
+    # Parse the JSON string back into a Python dictionary
+    try:
+        data_dict = json.loads(json_data)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Error decoding JSON data: {e}")
+
+    # Define the table IDs for each DataFrame
+    table_ids = {
+        'datetime_dim': 'uberdataproject-436710.uberdataset.datetime_dim',
+        'passenger_count_dim': 'uberdataproject-436710.uberdataset.passenger_count_dim',
+        'trip_distance_dim': 'uberdataproject-436710.uberdataset.trip_distance_dim',
+        'rate_code_dim': 'uberdataproject-436710.uberdataset.rate_code_dim',
+        'pickup_location_dim': 'uberdataproject-436710.uberdataset.pickup_location_dim',
+        'dropoff_location_dim': 'uberdataproject-436710.uberdataset.dropoff_location_dim',
+        'payment_type_dim': 'uberdataproject-436710.uberdataset.payment_type_dim',
+        'fact_table': 'uberdataproject-436710.uberdataset.fact_table',
+    }
+
+    # Load BigQuery configuration
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+    bigquery = BigQuery.with_config(ConfigFileLoader(config_path, config_profile))
+
+    # Export each DataFrame to the corresponding BigQuery table
+    for table_name, table_id in table_ids.items():
+        if table_name not in data_dict:
+            print(f"Warning: {table_name} not found in JSON data. Skipping export.")
+            continue
+        
+        # Check if the data for the table is a list and not empty
+        if isinstance(data_dict[table_name], list) and data_dict[table_name]:
+            df = DataFrame(data_dict[table_name])  # Convert JSON data back to DataFrame
+            try:
+                bigquery.export(
+                    df,
+                    table_id,
+                    if_exists='replace',  # Specify resolution policy if table name already exists
+                )
+                print(f"Exported {table_name} to {table_id} successfully.")
+            except Exception as e:
+                print(f"Error exporting {table_name} to {table_id}: {e}")
+        else:
+            print(f"Warning: No valid data for {table_name} found in JSON data. Skipping export.")
+

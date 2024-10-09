@@ -1,0 +1,38 @@
+import io
+import pandas as pd
+import requests
+
+# Import decorators if not already imported
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@data_loader
+def load_data_from_gcs(*args, **kwargs):
+    """
+    Load data from a CSV file stored in Google Cloud Storage.
+    """
+    # URL of the CSV file in Google Cloud Storage
+    url = 'https://storage.googleapis.com/uberdaten/uber_data.csv'
+    
+    # Send a GET request to the URL
+    response = requests.get(url)
+    
+    # Ensure the request was successful
+    if response.status_code == 200:
+        # Read the CSV data into a DataFrame
+        return pd.read_csv(io.StringIO(response.text), sep=',')
+    else:
+        # Raise an error if the request failed
+        raise Exception(f"Failed to fetch data from URL: {response.status_code} {response.reason}")
+
+
+@test
+def test_output(output, *args) -> None:
+    """
+    Test the output of the data loading function.
+    """
+    assert output is not None, 'The output is undefined'
+    assert not output.empty, 'The output DataFrame is empty'

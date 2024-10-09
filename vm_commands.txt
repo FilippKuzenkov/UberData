@@ -1,0 +1,23 @@
+sudo apt-get update -y
+sudo apt-get install python3-distutils
+sudo apt-get install python3-apt -y
+sudo apt-get install python3-pip -y
+pip3 --version
+sudo apt install python3-pandas
+sudo apt-get install build-essential libssl-dev libffi-dev python3-dev -y
+sudo apt-get update
+sudo apt-get install python3-venv python3-pip -y
+sudo apt install --upgrade pipx
+export PATH="$HOME/.local/bin:$PATH"
+source ~/.bashrc 
+pipx --version
+pipx install mage-ai
+pipx list
+sudo apt install python3-dask
+mage start uberdata
+mkdir my_project
+cd my_project
+python3 -m venv venv
+source venv/bin/activate
+sudo pip3 install google-cloud 
+sudo pip3 install google-cloud-bigquery

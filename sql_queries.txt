@@ -1,0 +1,62 @@
+-- Total Number of Trips Per Vendor
+SELECT 
+    VendorID,
+    COUNT(trip_id) AS total_trips
+FROM 
+    `uberdataproject-436710.uberdataset.analytics`
+GROUP BY 
+    VendorID
+ORDER BY 
+    total_trips DESC;
+
+-- Average Fare Amount by Payment Type
+SELECT 
+    pay.payment_type_name,
+    AVG(fare_amount) AS average_fare
+FROM 
+    `uberdataproject-436710.uberdataset.analytics` AS a
+JOIN 
+    `uberdataproject-436710.uberdataset.payment_type_dim` AS pay ON a.payment_type_id = pay.payment_type_id
+GROUP BY 
+    pay.payment_type_name
+ORDER BY 
+    average_fare DESC;
+
+-- Total Revenue by Month
+SELECT 
+    EXTRACT(YEAR FROM d.tpep_pickup_datetime) AS year,
+    EXTRACT(MONTH FROM d.tpep_pickup_datetime) AS month,
+    SUM(fare_amount + extra + mta_tax + tip_amount + tolls_amount + improvement_surcharge) AS total_revenue
+FROM 
+    `uberdataproject-436710.uberdataset.analytics` AS a
+JOIN 
+    `uberdataproject-436710.uberdataset.datetime_dim` AS d ON a.datetime_id = d.datetime_id
+GROUP BY 
+    year, month
+ORDER BY 
+    year, month;
+
+-- Top 5 Most Popular Pickup Locations
+SELECT 
+    pick.pickup_location_id,
+    COUNT(f.trip_id) AS total_pickups
+FROM 
+    `uberdataproject-436710.uberdataset.analytics` AS a
+JOIN 
+    `uberdataproject-436710.uberdataset.pickup_location_dim` AS pick ON a.pickup_location_id = pick.pickup_location_id
+GROUP BY 
+    pick.pickup_location_id
+ORDER BY 
+    total_pickups DESC
+LIMIT 5;
+
+-- Distribution of Trip Distances
+SELECT 
+    trip_distance,
+    COUNT(trip_id) AS trip_count
+FROM 
+    `uberdataproject-436710.uberdataset.analytics`
+GROUP BY 
+    trip_distance
+ORDER BY 
+    trip_distance;
